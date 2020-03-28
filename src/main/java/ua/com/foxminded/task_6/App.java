@@ -27,28 +27,17 @@ public class App {
         racingTop.readFile(f1, f2, f3);
 
 
-        LocalTime localDateTime = LocalTime.parse("12:10:51.985");
-        LocalTime localDateTime2 = LocalTime.parse("12:16:05.164");
-//        long minutes = ChronoUnit.MINUTES.between(localDateTime, localDateTime2);
+
+//        System.out.println(String.format("%02d:%02d:%02d",
+//                TimeUnit.MILLISECONDS.toMinutes(millis)
+//                        - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+//                TimeUnit.MILLISECONDS.toSeconds(millis)
+//                        - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)),
+//                TimeUnit.MILLISECONDS.toMillis(millis) -
+//                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toSeconds(millis))
 //
-//
-//        System.out.println(Duration.between(localDateTime, localDateTime2));
+//                )
+//        );
 
-        Duration dur = Duration.between(localDateTime, localDateTime2);
-        long millis = dur.toMillis();
-
-
-        System.out.println(String.format("%02d:%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(millis)
-                        - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-                TimeUnit.MILLISECONDS.toSeconds(millis)
-                        - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)),
-                TimeUnit.MILLISECONDS.toMillis(millis) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toSeconds(millis))
-
-                )
-        );
-
-////05:13.313179 // 05:313.313179
     }
 }

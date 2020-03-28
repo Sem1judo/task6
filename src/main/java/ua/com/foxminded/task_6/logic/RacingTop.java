@@ -63,7 +63,7 @@ public class RacingTop {
 
 
             Map<String, String> abbreviationMap = stream3.map(str -> str.split("_", 3))
-                    .collect(toMap(str -> str[0], str -> str[1] + "  | " + str[2]));
+                    .collect(toMap(str -> str[0], str -> str[1] + "  |" + str[2]));
 
             Map<String, String> finalResult = Stream.concat(result.entrySet().stream(), abbreviationMap.entrySet().stream())
                     .collect(Collectors.toMap(
@@ -76,10 +76,6 @@ public class RacingTop {
             ArrayList<String> valueList = new ArrayList<String>(finalResult.values());
             valueList.stream().forEach(s -> System.out.println(s));
 
-            valueList.stream().count();
-            System.out.println();
-
-            System.out.println(valueList);
 
         } catch (IOException e) {
             e.printStackTrace();
