@@ -1,5 +1,9 @@
 package ua.com.foxminded.task_6.logic;
 
+
+import ua.com.foxminded.task_6.exceptions.FileNotFoundException;
+import ua.com.foxminded.task_6.exceptions.FileProcessingException;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -14,76 +18,97 @@ import static java.util.stream.Collectors.toMap;
 
 public class RacingTop {
 
-    public static final String DELIMITER = "_";
-
-    public void readFile(String fileName1, String fileName2, String fileName3) {
-        try (Stream<String> stream1 = Files.lines(Paths.get(fileName1));
-             Stream<String> stream2 = Files.lines(Paths.get(fileName2));
-             Stream<String> stream3 = Files.lines(Paths.get(fileName3))) {
+    private final static String DELIMITER = "_";
+    private final static int DROPOUT = 15;
+    private static final TimeUnit TIME_UNIT_MILLIS = TimeUnit.MILLISECONDS;
 
 
+    public String readFile(String initialFileName, String finalFileName, String abbreviationFileName)  {
+        Map<String, String> tableRacers = null;
 
-            //creating maps
-            Map<String, String> file1 = stream1.map(str -> str.split(DELIMITER))
-                    .collect(toMap(str -> str[0], str -> str[1]));
+        try (Stream<String> initialData = Files.lines(Paths.get(initialFileName));
+             Stream<String> finalData = Files.lines(Paths.get(finalFileName));
+             Stream<String> setAbbreviations = Files.lines(Paths.get(abbreviationFileName))) {
 
-            Map<String, String> file2 = stream2.map(str -> str.split(DELIMITER))
-                    .collect(toMap(str -> str[0], str -> str[1]));
+            Map<String, String> dateTimeStart = parseFile(initialData);
 
-            Map<String, String> abbreviationMap = stream3.map(str -> str.split(DELIMITER, 3))
-                    .collect(toMap(str -> str[0], str -> str[1] + " |  " + str[2]));
+            Map<String, String> dateTimeEnd = parseFile(finalData);
+
+            Map<String, String> abbreviations = setAbbreviations.map(str -> str.split(DELIMITER, 3))
+                    .collect(toMap(key -> key[0], value -> value[1] + " |  " + value[2]));
 
 
-            Map<String, String> abbreviationsTime = Stream.concat(file1.entrySet().stream(), file2.entrySet().stream())
+            Map<String, String> abbreviationsTime = Stream.concat(dateTimeStart.entrySet().stream(), dateTimeEnd.entrySet().stream())
                     .collect(Collectors.toMap(
-                            s -> s.getKey().substring(0, 3),
+                            changedKey -> changedKey.getKey().substring(0, 3),
                             Map.Entry::getValue,
-                            (v1, v2) -> String.format("%01d:%02d.%d",
-                                    TimeUnit.MILLISECONDS.toMinutes(
-                                            Duration.between(LocalTime.parse(v1), LocalTime.parse(v2)).toMillis())
-                                            - TimeUnit.HOURS.toMinutes
-                                            (TimeUnit.MILLISECONDS.toHours(Duration.between(LocalTime.parse(v1), LocalTime.parse(v2)).toMillis())),
-                                    TimeUnit.MILLISECONDS.toSeconds(Duration.between(LocalTime.parse(v1), LocalTime.parse(v2)).toMillis())
-                                            - TimeUnit.MINUTES.toSeconds(
-                                            TimeUnit.MILLISECONDS.toMinutes(Duration.between(LocalTime.parse(v1), LocalTime.parse(v2)).toMillis())),
-                                    TimeUnit.MILLISECONDS.toMillis(Duration.between(LocalTime.parse(v1), LocalTime.parse(v2)).toMillis())
-                                            - TimeUnit.MINUTES.toSeconds(
-                                            TimeUnit.MILLISECONDS.toSeconds(Duration.between(LocalTime.parse(v1), LocalTime.parse(v2)).toMillis())
-                                    ))
-                    ));
-
+                            this::getDuration));
 
             Map<String, String> combinedNameTime = Stream.concat(
                     abbreviationsTime.entrySet().stream(),
-                    abbreviationMap.entrySet().stream())
+                    abbreviations.entrySet().stream())
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,
                             Map.Entry::getValue,
-                            (value1, value2) -> value2 + DELIMITER + value1));
+                            (valueTime, valueAbbreviations) -> valueAbbreviations + DELIMITER + valueTime));
 
-            String valuesString = combinedNameTime.entrySet().stream()
-                    .map(Map.Entry::getValue)
-                    .collect(Collectors.joining(","));
+            String nameTime = getValues(combinedNameTime);
 
-            Map<String, String> reconstructedUtilMap = Arrays.stream(valuesString.split(","))
+            Map<String, String> resultNameTime = Arrays.stream(nameTime.split(","))
                     .map(s -> s.split(DELIMITER))
                     .collect(Collectors.toMap(s -> s[0], s -> s[1]));
 
-            Map<String, String> sortedByValue = reconstructedUtilMap.entrySet()
-                    .stream()
-                    .sorted(Map.Entry.comparingByValue())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+            tableRacers = sortByValue(resultNameTime);
 
-            int counter = 1;
-            for (Map.Entry<String, String> entry : sortedByValue.entrySet()) {
-                if (counter==16){
-                    System.out.println("-------------------------------------------------------");
-                }
-                System.out.println(counter++ +". "+entry.getKey() + "  | " + entry.getValue());
-            }
 
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new FileProcessingException("Wrong data in file",e);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new FileNotFoundException("No such file",e);
         }
+        return drawTableRacers(tableRacers);
+    }
+
+    private String drawTableRacers(Map<String, String> map) {
+        StringBuilder tableRacers = new StringBuilder();
+        int counter = 0;
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (counter == DROPOUT) {
+                tableRacers.append("-------------------------------------------------------").append("\n");
+            }
+            tableRacers.append(++counter + ". " + entry.getKey() + "  | " + entry.getValue() + "\n");
+        }
+        return tableRacers.toString();
+    }
+
+    private Map sortByValue(Map<String, String> map) {
+        return map.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    }
+
+    private String getValues(Map<String, String> map) {
+        return map.entrySet().stream()
+                .map(Map.Entry::getValue)
+                .collect(Collectors.joining(","));
+    }
+
+    private Map parseFile(Stream<String> stream) {
+        return stream.map(sentence -> sentence.split("_"))
+                .collect(toMap(key -> key[0], value -> value[1]));
+    }
+
+    private String getDuration(String firstTime, String secondTime) {
+        long duration = Duration.between(LocalTime.parse(firstTime), LocalTime.parse(secondTime)).toMillis();
+
+        long minutes = TIME_UNIT_MILLIS.toMinutes(duration) - TimeUnit.HOURS.toMinutes(TIME_UNIT_MILLIS.toHours(duration));
+        long seconds = TIME_UNIT_MILLIS.toSeconds(duration) - TimeUnit.MINUTES.toSeconds(TIME_UNIT_MILLIS.toMinutes(duration));
+        long millis = TIME_UNIT_MILLIS.toMillis(duration) - TimeUnit.MINUTES.toSeconds(TIME_UNIT_MILLIS.toSeconds(duration));
+
+        return String.format("%01d:%02d.%d",
+                minutes, seconds, millis
+        );
     }
 }
+
