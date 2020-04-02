@@ -4,18 +4,24 @@ import ua.com.foxminded.task_6.exceptions.FileProcessingException;
 import ua.com.foxminded.task_6.logic.RacingTop;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 
 public class App {
 
-    public static void main(String[] args) throws IOException, FileProcessingException {
+    public static void main(String[] args) {
 
 
-        String f1 = "src/test/resources/start.log";
-        String f2 = "src/test/resources/end.log";
-        String f3 = "src/test/resources/abbreviations.txt";
+        String f1 = "src/resources/start.log";
+        String f2 = "src/resources/end.log";
+        String f3 = "src/resources/abbreviations.txt";
         RacingTop racingTop = new RacingTop();
-        System.out.println(racingTop.readFile(f2, f2, f2));
+
+        System.out.println(racingTop.readFile(f1, f2, f3));
 
 
 

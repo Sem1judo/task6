@@ -6,4 +6,7 @@ public class FileProcessingException extends RuntimeException {
         super(errorMessage, err);
     }
 
+    public FileProcessingException(String errorMessage) {
+        super(errorMessage);
+    }
 }
